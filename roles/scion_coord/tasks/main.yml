@@ -56,7 +56,7 @@
       force=yes
   become_user: scion
 
-- name: Set correct host Coordination Service
+- name: Set correct host for Coordination Service
   replace:
     path: "{{ repo_location }}/conf/development.conf"
     regexp: http.host = "[A-Za-z0-9.-]+"

@@ -1,2 +1,3 @@
 files/authorized_keys-scion
 hosts
+scion_coord_variables.yml
