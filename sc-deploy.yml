@@ -1,0 +1,14 @@
+---
+- hosts: scion_coord_nodes
+  roles:
+    - basic
+  remote_user: root
+  become: true
+
+- hosts: scion_coord_nodes
+  vars_files:
+    - scion_coord_variables.yml
+  roles:
+    - scion_coord
+  remote_user: scion
+  become: true

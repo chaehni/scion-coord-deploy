@@ -1,0 +1,83 @@
+---
+- name: Install Scion Coord Software
+  apt: name={{ item }}
+  with_items:
+  - git
+  - golang-go
+  - exim4
+  - python-mysqldb
+  - mysql-server
+
+- name: Copy over exim4 configuraton file
+  template:
+    src: files/exim4.conf
+    dest: /etc/exim4/exim4.conf
+    owner: root
+    group: root
+    mode: 0640
+
+- name: modify aliases file
+  lineinfile: "dest=/etc/aliases line='{{ exim_rewrite_user }}: {{ admin_email }}'"
+- lineinfile: "dest=/etc/aliases line='root: {{ admin_email }}'"
+
+- name: modify email-addresses file
+  lineinfile: "dest=/etc/email-addresses line='root: {{ exim_rewrite_user }}@{{ exim_primary_host }}'"
+- lineinfile: "dest=/etc/email-addresses line='scion: {{ exim_rewrite_user }}@{{ exim_primary_host }}'"
+
+- name: Create MySQL root user
+  mysql_user:
+    name: root
+    password: "{{ mysql_pass }}"
+    host: localhost
+    login_password: "{{ mysql_pass }}"
+
+- name: Create database
+  mysql_db:
+    name: "{{ mysql_db }}"
+    login_password: "{{ mysql_pass }}"
+
+- name: Make sure GOPATH exists in .profile
+  lineinfile: dest=/home/scion/.profile line="export GOPATH=\"$HOME/go\""
+
+- name: Make sure PATH exists in .profile
+  lineinfile: dest=/home/scion/.profile line="export PATH=\"$HOME/.local/bin:$GOPATH/bin:$PATH\""
+
+- name: Make sure alias for SCION Coordination Service folder exists .profile
+  lineinfile: dest=/home/scion/.profile
+              line="alias cdscioncoord='cd {{ repo_location }}'"
+
+- name: Make sure SCION Coordination Service folder exists
+  file: path={{ repo_location }} state=directory
+  become_user: scion
+
+- name: Checkout SCION Coord codebase
+  git: repo=https://github.com/chaehni/scion-coord
+      dest={{ repo_location }}
+      force=yes
+  become_user: scion
+
+- name: Set correct host Coordination Service
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: http.host = "[A-Za-z0-9.-]+"
+    replace: http.host = "{{ coord_host }}"
+
+- name: Set correct port for Coordination Service
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: http.port = "[0-9]+"
+    replace: http.port = "{{ coord_port }}"
+
+- name: Install govendor
+  shell: . /home/scion/.profile && go get github.com/kardianos/govendor
+  args:
+    creates: /home/scion/go/src/github.com/kardianos
+    chdir: "{{ repo_location }}/vendor"
+  become_user: scion
+
+- name: Do govendor sync
+  shell: ". /home/scion/.profile && govendor sync"
+  args:
+     creates: "{{ repo_location }}/vendor/github.com"
+     chdir: "{{ repo_location }}/vendor"
+  become_user: scion
