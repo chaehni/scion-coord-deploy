@@ -52,8 +52,9 @@
 
 - name: Checkout SCION Coord codebase
   git: repo=https://github.com/chaehni/scion-coord
-      dest={{ repo_location }}
-      force=yes
+       dest={{ repo_location }}
+       version={{ scion_coord_version }}
+       force=yes
   become_user: scion
 
 - name: Set correct host for Coordination Service
