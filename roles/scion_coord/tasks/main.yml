@@ -4,25 +4,8 @@
   with_items:
   - git
   - golang-go
-  - exim4
   - python-mysqldb
   - mysql-server
-
-- name: Copy over exim4 configuraton file
-  template:
-    src: files/exim4.conf
-    dest: /etc/exim4/exim4.conf
-    owner: root
-    group: root
-    mode: 0640
-
-- name: modify aliases file
-  lineinfile: "dest=/etc/aliases line='{{ exim_rewrite_user }}: {{ admin_email }}'"
-- lineinfile: "dest=/etc/aliases line='root: {{ admin_email }}'"
-
-- name: modify email-addresses file
-  lineinfile: "dest=/etc/email-addresses line='root: {{ exim_rewrite_user }}@{{ exim_primary_host }}'"
-- lineinfile: "dest=/etc/email-addresses line='scion: {{ exim_rewrite_user }}@{{ exim_primary_host }}'"
 
 - name: Create MySQL root user
   mysql_user:
@@ -57,17 +40,47 @@
        force=yes
   become_user: scion
 
-- name: Set correct host for Coordination Service
+- name: Set correct bind host for Coordination Service
   replace:
     path: "{{ repo_location }}/conf/development.conf"
-    regexp: http.host = "[A-Za-z0-9.-]+"
-    replace: http.host = "{{ coord_host }}"
+    regexp: http.bind_address = "[A-Za-z0-9.-]+"
+    replace: http.bind_address = "{{ coord_bind_address }}"
 
-- name: Set correct port for Coordination Service
+- name: Set correct bind port for Coordination Service
   replace:
     path: "{{ repo_location }}/conf/development.conf"
-    regexp: http.port = "[0-9]+"
-    replace: http.port = "{{ coord_port }}"
+    regexp: http.bind_port = "[0-9]+"
+    replace: http.bind_port = "{{ coord_bind_port }}"
+
+- name: Set correct address for Coordination Service
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: http.host_address = "[A-Za-z0-9.-]+"
+    replace: http.host_address = "{{ coord_address }}"
+
+- name: Set Postmark server token
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: email.pm_server_token = ""
+    replace: email.pm_server_token = "{{ pm_server_token }}"
+
+- name: Set Postmark account token
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: email.pm_account_token = ""
+    replace: email.pm_server_token = "{{ pm_account_token }}"
+
+- name: Set captcha site key
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: captcha.site_key = ""
+    replace: captcha.site_key = "{{ captcha.site_key }}"
+
+- name: Set captcha secret key
+  replace:
+    path: "{{ repo_location }}/conf/development.conf"
+    regexp: captcha.secret_key = ""
+    replace: captcha.secret_key = "{{ captcha.secret_key }}"
 
 - name: Install govendor
   shell: . /home/scion/.profile && go get github.com/kardianos/govendor

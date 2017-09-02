@@ -1,8 +1,10 @@
-admin_email:
-exim_primary_host: coord.scionproto.net
-exim_rewrite_user: no-reply
 mysql_db: scion_coord_test
 mysql_pass: 
 repo_location: /home/scion/go/src/github.com/netsec-ethz/scion-coord
-coord_host: 
-coord_port: 
+coord_bind_address: 
+coord_bind_port:
+coord_address:
+pm_server_token:
+pm_account_token:
+captcha.site_key:
+captcha.secret_key:
